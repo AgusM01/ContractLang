@@ -1,3 +1,4 @@
+-- Ver de implementar, quizas sea mejor dejarlo afuera.
 module OptFunc where 
 
 import ContFunc

@@ -5,10 +5,11 @@ type Day = Int
 type Month = Int 
 type Year = Int 
 
-data Date = D Day Month Year
+-- Inf es para el caso de un horizonte infinito (al momento de crear contrtos One)
+data Date = Inf | D Day Month Year 
 
 -- Monedas disponibles
-data Currency = GBP | USD | AP | EU 
+data Currency = GBP | USD | ARS | EUR 
 
 -- Las variables observables son aquellas cuyo valor 
 -- puede ser determinado a partir de fuentes verificables,
@@ -34,8 +35,9 @@ instance Applicative Obs where
 
 
 -- Representación de un contrato
+-- AST del lenguaje
 data Contract = Zero
-                | One Currency -- No es necesario que tenga fecha, es siempre para ahora.
+                | One Date Currency 
                 | Give Contract
                 | And Contract Contract 
                 | Or Contract Contract 
@@ -44,6 +46,8 @@ data Contract = Zero
                 | Scale (Obs Double) Contract -- Me permite crear contratos de mayor valor.
                 | Get Contract
                 | Anytime Contract
+                | CD Day Month Year -- Usado para definir fechas: t1 = date 28 12 2001
+                | DInf  -- Caso fechas infinitas
 
 -- Valor del "proceso" (contrato).
 -- TimeStep es su horizonte -> Su fecha límite de adquisisión. 

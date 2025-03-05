@@ -1,6 +1,6 @@
 module ContFunc where 
 
-import Def ( Contract(..), Obs, Currency, Date )
+import Def 
 import Prelude hiding (truncate, or)
 
 -- El contrato zero puede ser adquirido 
@@ -14,7 +14,7 @@ zero = Zero
 -- paga al tenedor una unidad de la moneda k.
 -- El contrato tiene horizonte infinito. 
 one :: Currency -> Contract 
-one = One  
+one = One Inf   
 
 -- Adquirir (give c) es adquirir todos los
 -- derechos de c como obligaciones, y vice versa.
