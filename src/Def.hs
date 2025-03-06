@@ -33,17 +33,21 @@ instance Applicative Obs where
     (LIBOR f) <*> x         = fmap f x
     (EUAP f) <*>  x         = fmap f x
 
+type Var = String
 
 -- Representación de un contrato
 -- AST del lenguaje
 data Contract = Zero
-                | One Date Currency 
+                | OneV Var Currency -- En el caso de poner date como una variable.
+                | OneD Date Currency -- En el caso de poner la fecha directamente.
                 | Give Contract
                 | And Contract Contract 
-                | Or Contract Contract 
-                | Truncate Date Contract 
+                | Or Contract Contract
+                | TruncateV Var Contract 
+                | TruncateD Date Contract 
                 | Then Contract Contract
-                | Scale (Obs Double) Contract -- Me permite crear contratos de mayor valor.
+                | ScaleN (Obs Double) Contract -- Me permite crear contratos de mayor valor.
+                | ScaleV Var Contract
                 | Get Contract
                 | Anytime Contract
                 | CD Day Month Year -- Usado para definir fechas: t1 = date 28 12 2001
