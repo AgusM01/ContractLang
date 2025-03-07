@@ -11,10 +11,12 @@ data Date = Inf | D Day Month Year
 -- Monedas disponibles
 data Currency = GBP | USD | ARS | EUR 
 
+--------- VER SI INCLUIR -------------------------------------------------------
 -- Las variables observables son aquellas cuyo valor 
 -- puede ser determinado a partir de fuentes verificables,
 -- como precios de mercado, tasas de interés, índices financieros, entre otros. 
 data Obs a = CONST a | LIBOR a  | EUAP a -- | USDEUR a | GBPUSD a | USDAP a 
+--------------------------------------------------------------------------------
 
 -- Lo hacemos instancia de Functor para así poder generalizar funciones como lift. 
 instance Functor Obs where 
@@ -35,8 +37,9 @@ instance Applicative Obs where
 
 type Var = String
 
--- Representación de un contrato
 -- AST del lenguaje
+-- Representación de un contrato
+
 data Contract = Zero
                 | OneV Var Currency -- En el caso de poner date como una variable.
                 | OneD Date Currency -- En el caso de poner la fecha directamente.
@@ -46,13 +49,17 @@ data Contract = Zero
                 | TruncateV Var Contract 
                 | TruncateD Date Contract 
                 | Then Contract Contract
-                | ScaleN (Obs Double) Contract -- Me permite crear contratos de mayor valor.
+                | ScaleN Int Contract -- Me permite crear contratos de mayor valor. <- Analizar observables.
                 | ScaleV Var Contract
                 | Get Contract
                 | Anytime Contract
                 | CD Day Month Year -- Usado para definir fechas: t1 = date 28 12 2001
-                | DInf  -- Caso fechas infinitas
 
+-- Representación de comandos
+data Comm = LetCont Var Contract 
+            | LetDate Var Date 
+            | Seq Comm Comm 
+    
 -- Valor del "proceso" (contrato).
 -- TimeStep es su horizonte -> Su fecha límite de adquisisión. 
 -- Slice es una lista de columnas una por paso de tiempo en orden al revés. 

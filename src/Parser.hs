@@ -17,11 +17,11 @@ totParser p = do whiteSpace ctr
 ctr :: TokenParser u 
 ctr = makeTokenParser
     (emptyDef
-        { commentStart = "/*"                                           ,
-          commentEnd = "*/"                                             ,
-          commentLine = "//"                                            ,
-          opLetter = char '='                                           ,
-          reservedNames = [ "zero", "one", "date", "USD", "EUR", "ARS"] , 
+        { commentStart = "/*"                                                  ,
+          commentEnd = "*/"                                                    ,
+          commentLine = "//"                                                   ,
+          opLetter = char '='                                                  ,
+          reservedNames = [ "zero", "one", "date", "USD", "EUR", "ARS", "inf"] , 
           reservedOpNames = [ "give", "and", "or", "truncate", 
                             "then", "scale", "get", 
                             "anytime", "=", ";" ]
@@ -39,30 +39,57 @@ ctr = makeTokenParser
 -- Para poner fechas t valores, estos deben estar previamente definidos
 -- en una variable. 
 
--- let :: 'a' let | ... | 'z' let 
--- numVar ::= '0' numVar | ... | '9' numVar | let |eps 
--- num ::= '0' num | ... | '9' num
--- var ::= let num
+-- letter :: 'a' | ... | '>'  
+-- digit ::= '0' | ... | '9'
+-- nat ::= digit | digit nat  
+-- var ::= letter | letter var
+
 -- Comm ::=  var '=' ContExp | Comm ';' Comm | var '=' Date
 
 -- Date ::=  'date' num num num
 
 -- Cur ::= "GBP" | "USD" | "ARS" | "EUR"
+
 -- ContExp1 ::=  ContExp1 'and' ContExp2 
 --              | ContExp1 'or' ContExp2 
 --              | ContExp1 'then' ContExp2
 --              | ContExp2
 
--- ContExp2 ::= | zero
---              | one var Cur
---              | 'give' ContExp2 
---              | 'truncate' var ContExp2
---              | 'scale' var ContExp2  
---              | 'anytime' ContExp2
+-- ContExp2 ::= zero 
+--              | one var cur
+--              | one date cur
+--              |'give' ContExp1 
+--              | 'truncate' var ContExp1
+--              | 'scale' var ContExp1  
+--              | 'anytime' ContExp1
 --              | '(' ContExp1 ')'
 
+
 contexp1 :: Parser Contract
-contexp1 = chainl1 contexp2 op1Parser 
+contexp1 = chainl1 contexp2 op1Parser
+
+op1Parser :: Parser (Contract -> Contract -> Contract)
+op1Parser = try (do reservedOp ctr "and" 
+                    return And)
+                <|> try (do reservedOp ctr "or"
+                            return Or)
+                        <|> (do reservedOp ctr "then"
+                                return Then)
+
+contexp2 :: Parser Contract
+contexp2 = try primParser <|> op2Parser 
+        
+op2Parser :: Parser Contract
+op2Parser = try giveParser <|> 
+            try truncateParser <|> 
+            try scaleParser <|> 
+            try anytimeParser 
+
+primParser :: Parser Contract
+primParser = try zeroParser <|>
+             try oneParser <|>
+             parensParser
+
 
 zeroParser :: Parser Contract 
 zeroParser = do reserved ctr "zero"
@@ -78,45 +105,78 @@ oneParser = try (do reserved ctr "one"
                        c <- curParser
                        return $ OneD d c 
 
-giveParser :: Parser (Contract -> Contract)
-giveParser = do reserved ctr "give"
-                return Give
+parensParser :: Parser Contract 
+parensParser = do symbol ctr "("
+                  c <- contexp1
+                  symbol ctr ")"
+                  return c 
 
-truncateParser :: Parser (Contract -> Contract)
-truncateParser = try (do reserved ctr "truncate"
-                         v <- varParser 
-                         return (TruncateV v))
-                      <|> do reserved ctr "truncate"
+giveParser :: Parser Contract
+giveParser = do reservedOp ctr "give"
+                c <- contexp1
+                return $ Give c 
+
+truncateParser :: Parser Contract
+truncateParser = try (do reservedOp ctr "truncate"
+                         v <- varParser
+                         c <- contexp1 
+                         return (TruncateV v c))
+                      <|> do reservedOp ctr "truncate"
                              d <- dateParser 
-                             return (TruncateD d)
+                             c <- contexp1
+                             return (TruncateD d c)
 
-scaleParser :: Parser (Contract -> Contract)
-scaleParser = try (do reserved ctr "scale"
-                      n <- numParser
-                      return (ScaleN n))
-                 <|> do reserved ctr "scale"
-                        v <- varParser 
-                        return (ScaleV v)
+scaleParser :: Parser Contract
+scaleParser = try (do reservedOp ctr "scale"
+                      n <- natural ctr
+                      c <- contexp1
+                      return (ScaleN (fromInteger n) c))
+                 <|> do reservedOp ctr "scale"
+                        v <- varParser
+                        c <- contexp1 
+                        return (ScaleV v c)
 
-anytimeParser :: Parser (Contract -> Contract)
-anytimeParser = do reserved ctr "anytime"
-                   return Anytime
+anytimeParser :: Parser Contract
+anytimeParser = do reservedOp ctr "anytime"
+                   c <- contexp1
+                   return $ Anytime c
 
-                
+curParser :: Parser Currency 
+curParser = try (do reserved ctr "GBP"
+                    return GBP)
+                <|> try (do reserved ctr "USD"
+                            return USD)
+                        <|> try (do reserved ctr "ARS"
+                                    return ARS)
+                                 <|> do reserved ctr "EUR"
+                                        return EUR
 
+dateParser :: Parser Date 
+dateParser = try (do reserved ctr "inf"
+                     return Inf)
+                  <|> (do d <- natural ctr
+                          m <- natural ctr
+                          y <- natural ctr 
+                          return $ D (fromInteger d) (fromInteger m) (fromInteger y))
 
-{-
-contextp2 :: Parser Contract 
-contexp2 = try (do reserved lis "zero"
-                   return Zero)
-                <|> do reserved lis "one"
-                       v <- var
-                       c <- cur
-                       return OneS v c 
-                    <|> do reserved lis "one"
-                           d <- date 
-                           c <- cur 
-                           return OneD d c
-                        <|> do reserved lis "give"
-                               c <- 
--}
+varParser :: Parser Var
+varParser = do identifier ctr 
+
+commParser :: Parser Comm 
+commParser = chainl1 (try letContParser <|>  letDateParser) seqParser
+
+letContParser :: Parser Comm 
+letContParser = do v <- varParser
+                   reservedOp ctr "="
+                   c <- contexp1
+                   return $ LetCont v c 
+
+letDateParser :: Parser Comm 
+letDateParser = do v <- varParser 
+                   reservedOp ctr "="
+                   d <- dateParser
+                   return $ LetDate v d 
+
+seqParser :: Parser (Comm -> Comm -> Comm) 
+seqParser = do reservedOp ctr ";"
+               return Seq
