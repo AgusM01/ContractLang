@@ -1,0 +1,8 @@
+-- Aquí se encuentra el modelo que utilizaremos para calcular el 
+-- precio de los contratos.
+--
+-- La idea es:
+--  1) Obtener la fecha de hoy: f_act
+--  2) Verificar que es anterior al horizonte del contrato: f_act < H(c)
+--  3) Calcular la cantidad de días entre la fecha actual y el horizonte del contrato: H(c) - f_act 
+--  4) -- PREG 

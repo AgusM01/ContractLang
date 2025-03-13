@@ -83,7 +83,7 @@ op2Parser :: Parser Contract
 op2Parser = try giveParser <|> 
             try truncateParser <|> 
             try scaleParser <|> 
-            try anytimeParser 
+            anytimeParser 
 
 primParser :: Parser Contract
 primParser = try zeroParser <|>
@@ -180,3 +180,10 @@ letDateParser = do v <- varParser
 seqParser :: Parser (Comm -> Comm -> Comm) 
 seqParser = do reservedOp ctr ";"
                return Seq
+
+------------------------------------
+-- Función de parseo
+------------------------------------
+parseComm :: SourceName -> String -> Either ParseError Comm -- Este es el parser que queremos definir.
+parseComm = parse (totParser commParser)
+

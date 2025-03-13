@@ -6,10 +6,10 @@ type Month = Int
 type Year = Int 
 
 -- Inf es para el caso de un horizonte infinito (al momento de crear contrtos One)
-data Date = Inf | D Day Month Year 
+data Date = Inf | D Day Month Year deriving Show 
 
 -- Monedas disponibles
-data Currency = GBP | USD | ARS | EUR 
+data Currency = GBP | USD | ARS | EUR deriving Show 
 
 --------- VER SI INCLUIR -------------------------------------------------------
 -- Las variables observables son aquellas cuyo valor 
@@ -39,7 +39,9 @@ type Var = String
 
 -- AST del lenguaje
 -- Representación de un contrato
-
+-- Mejora a futuro: Poder poner variables en lugar de Contracts.
+-- Preguntar si hay una manera cómoda de hacerlo sin que sea verborrágica (agregar 
+-- un constructor más poniendo Var en vez de Contract)
 data Contract = Zero
                 | OneV Var Currency -- En el caso de poner date como una variable.
                 | OneD Date Currency -- En el caso de poner la fecha directamente.
@@ -53,12 +55,11 @@ data Contract = Zero
                 | ScaleV Var Contract
                 | Get Contract
                 | Anytime Contract
-                | CD Day Month Year -- Usado para definir fechas: t1 = date 28 12 2001
-
+                | CD Day Month Year deriving Show-- Usado para definir fechas: t1 = date 28 12 2001 
 -- Representación de comandos
 data Comm = LetCont Var Contract 
             | LetDate Var Date 
-            | Seq Comm Comm 
+            | Seq Comm Comm deriving Show 
     
 -- Valor del "proceso" (contrato).
 -- TimeStep es su horizonte -> Su fecha límite de adquisisión. 
@@ -72,7 +73,7 @@ data Comm = LetCont Var Contract
 -- los intereses. La inflación siempre existe y pagar 100usd en Mayo
 -- es totalmente diferente que hacerlo en Diciembre.
 type ValProc = (TimeStep, [Slice])
-type Slice = [Double]
+type Slice = Double -- Será un arreglo normal, no un lattice (recombining tree)
 type TimeStep = Date
 
 -- ValProc puede ser una mónada que vaya llevando
