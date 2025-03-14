@@ -55,7 +55,9 @@ data Contract = Zero
                 | ScaleV Var Contract
                 | Get Contract
                 | Anytime Contract
-                | CD Day Month Year deriving Show-- Usado para definir fechas: t1 = date 28 12 2001 
+                | VarC Var -- Para poder representar contratos con variables.
+                | CD Day Month Year deriving Show -- Usado para definir fechas: t1 = date 28 12 2001 
+
 -- Representación de comandos
 data Comm = LetCont Var Contract 
             | LetDate Var Date 

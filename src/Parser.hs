@@ -63,6 +63,7 @@ ctr = makeTokenParser
 --              | 'truncate' var ContExp1
 --              | 'scale' var ContExp1  
 --              | 'anytime' ContExp1
+--              | var
 --              | '(' ContExp1 ')'
 
 
@@ -84,7 +85,12 @@ op2Parser :: Parser Contract
 op2Parser = try giveParser <|> 
             try truncateParser <|> 
             try scaleParser <|> 
-            anytimeParser 
+            try anytimeParser <|>
+            varCParser
+
+varCParser :: Parser Contract
+varCParser = do v <- varParser 
+                return $ VarC v
 
 primParser :: Parser Contract
 primParser = try zeroParser <|>
@@ -194,6 +200,6 @@ commDateParser = do reserved ctr "date"
 ------------------------------------
 -- Función de parseo
 ------------------------------------
-parseComm :: SourceName -> String -> Either ParseError Comm -- Este es el parser que queremos definir.
+parseComm :: SourceName -> String -> Either ParseError Comm 
 parseComm = parse (totParser commParser)
 
