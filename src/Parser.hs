@@ -44,6 +44,7 @@ ctr = makeTokenParser
 -- nat ::= digit | digit nat  
 -- var ::= letter | letter var
 
+-- CommD = initDate ';' Comm
 -- Comm ::=  var '=' ContExp | Comm ';' Comm | var '=' Date
 
 -- Date ::=  'date' num num num
@@ -163,7 +164,10 @@ varParser :: Parser Var
 varParser = do identifier ctr 
 
 commParser :: Parser Comm 
-commParser = chainl1 (try letContParser <|>  letDateParser) seqParser
+commParser = do d <- commDateParser 
+                reservedOp ctr ";"
+                r <- chainl1 (try letContParser <|> letDateParser) seqParser
+                return $ Seq d r 
 
 letContParser :: Parser Comm 
 letContParser = do v <- varParser
@@ -181,6 +185,12 @@ seqParser :: Parser (Comm -> Comm -> Comm)
 seqParser = do reservedOp ctr ";"
                return Seq
 
+commDateParser :: Parser Comm
+commDateParser = do reserved ctr "date"
+                    d <- natural ctr
+                    m <- natural ctr
+                    y <- natural ctr 
+                    return $ InitDate (fromInteger d) (fromInteger m) (fromInteger y)
 ------------------------------------
 -- Función de parseo
 ------------------------------------

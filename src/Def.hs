@@ -59,8 +59,8 @@ data Contract = Zero
 -- Representación de comandos
 data Comm = LetCont Var Contract 
             | LetDate Var Date 
-            | Seq Comm Comm deriving Show 
-    
+            | Seq Comm Comm  
+            | InitDate Day Month Year deriving Show
 -- Valor del "proceso" (contrato).
 -- TimeStep es su horizonte -> Su fecha límite de adquisisión. 
 -- Slice es una lista de columnas una por paso de tiempo en orden al revés. 
