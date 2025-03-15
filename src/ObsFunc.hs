@@ -49,8 +49,3 @@ instance Num a => Num (Obs a) where
 -- COMO OBTENGO S? => MÓNADAS?
 -- time :: Date -> Obs Days 
 
-
-
-
-
-

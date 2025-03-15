@@ -11,3 +11,6 @@ c_get = get (scale 30 (one 13 3 2025 USD))
 
 // Tambien puede ser que el usuario pida el monto de dinero para x fecha.
 // Si falta información -> pedirle al usuario.
+
+// La idea es guardar un mapa que asocie cada fecha a un valor de dinero.
+// Luego poder ordenar esas fechas de la mas antigua a la mas nueva y realizar un gráfico.
