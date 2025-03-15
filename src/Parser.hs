@@ -159,12 +159,10 @@ curParser = try (do reserved ctr "GBP"
                                         return EUR
 
 dateParser :: Parser Date 
-dateParser = try (do reserved ctr "inf"
-                     return Inf)
-                  <|> (do d <- natural ctr
-                          m <- natural ctr
-                          y <- natural ctr 
-                          return $ D (fromInteger d) (fromInteger m) (fromInteger y))
+dateParser = do d <- natural ctr
+                m <- natural ctr
+                y <- natural ctr 
+                return $ D (fromInteger d) (fromInteger m) (fromInteger y)
 
 varParser :: Parser Var
 varParser = do identifier ctr 

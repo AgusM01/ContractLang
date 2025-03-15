@@ -6,7 +6,7 @@ type Month = Int
 type Year = Int 
 
 -- Inf es para el caso de un horizonte infinito (al momento de crear contrtos One)
-data Date = Inf | D Day Month Year deriving Show 
+data Date = D Day Month Year deriving Show 
 
 -- Monedas disponibles
 data Currency = GBP | USD | ARS | EUR deriving Show 
