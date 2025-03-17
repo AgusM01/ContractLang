@@ -21,15 +21,12 @@ import Control.Monad                                    ( liftM
 type PlotList = [(Date, Int)]
 
 -- Entornos
-type EnvDI = M.Map Date Int 
+--type EnvDI = M.Map Date Int 
 type EnvVC = M.Map Var Contract 
 type EnvVD = M.Map Var Date 
 
 -- Cambiar por dos estados y el valor a devolver sea la lista de tuplas date-dinero.
 -- Entorno nulo 
-initEnvDI :: EnvDI 
-initEnvDI = M.empty 
-
 initEnvVC :: EnvVC
 initEnvVC = M.empty
 
@@ -37,11 +34,11 @@ initEnvVD :: EnvVD
 initEnvVD = M.empty
 
 -- Mónada estado
-newtype State a = State { runState :: EnvDI -> EnvVC -> EnvVD -> Pair (Pair (Pair a EnvDI) EnvVC) EnvVD }
+newtype State a = State { runState :: EnvVC -> EnvVD -> Pair (Pair a EnvVC) EnvVD }
 
 instance Monad State where
-    return x = State (\sdi svc svd -> (((x :!: sdi) :!: svc) :!: svd)) 
-    m >>= f = State (\sdi svc svd -> let (((x :!: sdi') :!: svc') :!: svd') = (runState m sdi svc svd) in (runState f x) sdi' svc' svd') 
+    return x = State (\svc svd -> ((x :!: svc) :!: svd)) 
+    m >>= f = State (\svc svd -> let ((x :!: svc') :!: svd') = (runState m svc svd) in (runState f x) svc' svd') 
 
 -- Para calmar al GHC
 instance Functor State where
@@ -53,17 +50,12 @@ instance Applicative State where
 
 
 instance MonadState State where 
-    lookfor d = State (\sdi svc svd  -> (((lookfor' d sdi svc svd :!: sdi) :!: svc) :!: svd))
-        where lookfor' v sdi svc sdv = case v of 
-                                            D _ _ _ -> fromJust $ M.lookup v sdi
-                                            _ -> case M.lookup v svc of 
-                                                      Just x -> x 
-                                                      Nothing -> fromJust $ M.lookup v sdv
-    update d i = State (\sdi svc svd -> case d of 
-                                          D _ _ _ -> ((( () :!: M.insert v i sdi) :!: svc) :!: svd)
-                                          _       -> case i of 
-                                                        D _ _ _ -> ((( () :!: sdi) :!: svc) :!: M.insert v i svd)
-                                                        _       -> ((( () :!: sdi) :!: M.insert v i svc) :!: svd))
-
+    lookfor v = State (\svc svd  -> ((lookfor' v svc svd :!: svc) :!: svd))
+        where lookfor' v svc sdv = case M.lookup v svc of 
+                                        Just x  -> x 
+                                        Nothing -> fromJust $ M.lookup v sdv
+    update v i = State (\svc svd -> case i of 
+                                       D _ _ _ -> ( () :!: svc ) :!: M.insert v i svd
+                                       _       -> ( () :!: M.insert v i svc ) :!: svd)
 
 
