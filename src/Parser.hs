@@ -21,7 +21,7 @@ ctr = makeTokenParser
           commentEnd = "*/"                                                    ,
           commentLine = "//"                                                   ,
           opLetter = char '='                                                  ,
-          reservedNames = [ "zero", "one", "date", "USD", "EUR", "ARS", "inf"] , 
+          reservedNames = [ "zero", "one", "date", "USD", "EUR", "ARS", "skip"], 
           reservedOpNames = [ "give", "and", "or", "truncate", 
                             "then", "scale", "get", 
                             "anytime", "=", ";" ]
@@ -45,7 +45,7 @@ ctr = makeTokenParser
 -- var ::= letter | letter var
 
 -- CommD = initDate ';' Comm
--- Comm ::=  var '=' ContExp | Comm ';' Comm | var '=' Date
+-- Comm ::=  var '=' ContExp | Comm ';' Comm | var '=' Date | 'skip' 
 
 -- Date ::=  'date' num num num
 
@@ -167,11 +167,17 @@ dateParser = do d <- natural ctr
 varParser :: Parser Var
 varParser = do identifier ctr 
 
+-- Puede aparecer un skip en cualquier momento.
+-- No importa, se ajusta en el eval.
 commParser :: Parser Comm 
 commParser = do d <- commDateParser 
                 reservedOp ctr ";"
-                r <- chainl1 (try letContParser <|> letDateParser) seqParser
+                r <- chainl1 (try letContParser <|> try letDateParser <|> skipParser) seqParser
                 return $ Seq d r 
+
+skipParser :: Parser Comm
+skipParser = do reserved ctr "skip"
+                return Skip
 
 letContParser :: Parser Comm 
 letContParser = do v <- varParser

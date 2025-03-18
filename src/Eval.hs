@@ -59,3 +59,25 @@ instance MonadState State where
                                        _       -> ( () :!: M.insert v i svc ) :!: svd)
 
 
+-- Evalúa un programa en el estado nulo. 
+eval :: Comm -> PlotList        
+eval c = fst (fst ( runState (stepCommStar c) initEnvVC initEnvVD))
+
+-- Evalúa múltiples pasos de un comando. Hasta alcanzar un Skip.
+stepCommStar :: MonadState m => Comm -> m ()
+stepCommStar Skip = return ()
+stepCommStar c = stepComm >>= \c' -> stepCommStar c'
+
+-- Evalua un paso de un comando
+stepComm :: MonadState m => Comm -> m Comm
+stepComm Skip = return Skip -- Nunca va a ser Skip
+stepComm (LetCont v1 ctr ) =  do eva <- evalCtr ctr
+                                 update v1 eva 
+                                 return Skip 
+stepComm (LetDate v1 date) =  do update v1 date 
+                                 return Skip 
+stepComm (Seq (InitDate d m y) c2 = ... -- Ver bien 
+stepComm (Seq Skip c2)  = return c2 
+stepComm (Seq c1 c2)    = do  sc1 <- stepComm c1 
+                              return (Seq sc1 c2)  
+

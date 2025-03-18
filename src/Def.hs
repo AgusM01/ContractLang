@@ -59,7 +59,8 @@ data Contract = Zero
                 | CD Day Month Year deriving Show -- Usado para definir fechas: t1 = date 28 12 2001 
 
 -- Representación de comandos
-data Comm = LetCont Var Contract 
+data Comm = Skip
+            | LetCont Var Contract 
             | LetDate Var Date 
             | Seq Comm Comm  
             | InitDate Day Month Year deriving Show
