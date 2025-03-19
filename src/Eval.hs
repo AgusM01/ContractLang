@@ -18,7 +18,8 @@ import Control.Monad                                    ( liftM
                                                         )
 
 -- Valores 
-type PlotList = [(Date, Int)]
+-- Al final traducir todas las monedas a USD. 
+type PlotList = [(Date, Int, Currency)]
 
 -- Entornos
 --type EnvDI = M.Map Date Int 
@@ -58,26 +59,39 @@ instance MonadState State where
                                        D _ _ _ -> ( () :!: svc ) :!: M.insert v i svd
                                        _       -> ( () :!: M.insert v i svc ) :!: svd)
 
+-- Agrega la primera fecha y el monto de dinero actual.
+-- Siempre empezamos en 0.
+addInitDate :: MonadState m => Comm -> m PlotList
+addInitDate InitDate d m y = return [(Date d m y, 0)]
+
+-- Ver
+--addVal :: MonadState m => PlotList -> m PlotList -> m PlotList
+--addVal v m = 
 
 -- Evalúa un programa en el estado nulo. 
 eval :: Comm -> PlotList        
 eval c = fst (fst ( runState (stepCommStar c) initEnvVC initEnvVD))
 
 -- Evalúa múltiples pasos de un comando. Hasta alcanzar un Skip.
+-- No devuelve un valor en sí ya que sólo tiene efectos secundarios.
 stepCommStar :: MonadState m => Comm -> m ()
 stepCommStar Skip = return ()
 stepCommStar c = stepComm >>= \c' -> stepCommStar c'
 
 -- Evalua un paso de un comando
-stepComm :: MonadState m => Comm -> m Comm
-stepComm Skip = return Skip -- Nunca va a ser Skip
+stepComm :: MonadState m => Comm -> m PlotList
+stepComm Skip = return [] -- Nunca va a ser Skip
 stepComm (LetCont v1 ctr ) =  do eva <- evalCtr ctr
                                  update v1 eva 
-                                 return Skip 
+                                 return [] 
 stepComm (LetDate v1 date) =  do update v1 date 
-                                 return Skip 
-stepComm (Seq (InitDate d m y) c2 = ... -- Ver bien 
-stepComm (Seq Skip c2)  = return c2 
+                                 return [] 
+stepComm (Seq id@(InitDate d m y) c2) = addInitDate id -- Ver bien 
+stepComm (Seq Skip c2)  = return [] 
 stepComm (Seq c1 c2)    = do  sc1 <- stepComm c1 
-                              return (Seq sc1 c2)  
+                              return []
+
+evalCtr :: MonadState m => Contract -> m PlotList 
+evalCtr Zero = return []
+--evalCtr OneV v c = 
 
